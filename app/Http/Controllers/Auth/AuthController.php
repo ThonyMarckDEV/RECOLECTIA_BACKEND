@@ -27,7 +27,57 @@ use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
-     /**
+    /**
+     * Handle username/password login.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function login(Request $request)
+    {
+        // Validate request
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+            'remember_me' => 'boolean',
+        ]);
+
+        try {
+            // Find user by username
+            $user = User::where('username', $request->username)->first();
+
+            // Check if user exists and password is correct
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'message' => 'Usuario o contraseña incorrectos',
+                ], 401);
+            }
+
+            // Check user status
+            if ($user->estado !== 1) {
+                return response()->json([
+                    'message' => 'Error: estado del usuario inactivo',
+                ], 403);
+            }
+
+            // Generate tokens
+            $tokens = TokenService::generateTokens($user, $request->remember_me ?? false, $request->ip(), $request->userAgent());
+
+            return response()->json([
+                'message' => 'Login exitoso',
+                'access_token' => $tokens['access_token'],
+                'refresh_token' => $tokens['refresh_token'],
+                'idRefreshToken' => $tokens['idRefreshToken'],
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al iniciar sesión',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Handle Google login.
      *
      * @param Request $request
