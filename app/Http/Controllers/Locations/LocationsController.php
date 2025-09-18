@@ -22,15 +22,17 @@ class LocationsController extends Controller
             'longitude' => 'required|numeric',
         ]);
 
-        // Assume user is authenticated, get idUsuario from authenticated user
-        $idUsuario = Auth::id(); // Adjust based on your auth system
+        // Get the authenticated user's ID
+        $idUsuario = Auth::id();
 
-        // Insert new location record
-        Location::updateOrCreate([
-            'idUsuario' => $idUsuario,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-        ]);
+        // Update or create the location record
+        Location::updateOrCreate(
+            ['idUsuario' => $idUsuario], // Search criteria: match by idUsuario
+            [                            // Attributes to update or create
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+            ]
+        );
 
         return response()->json([
             'message' => 'Ubicación actualizada exitosamente',
