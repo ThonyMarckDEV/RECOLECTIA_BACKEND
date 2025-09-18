@@ -96,10 +96,17 @@ class AuthController extends Controller
                 [
                     'username' => $googleUser['email'],
                     'name' => $googleUser['name'] ?? $googleUser['given_name'] ?? 'Usuario Google',
+                    'perfil' => $googleUser['picture'] ?? null, // Save Google profile picture URL
                     'idRol' => 2, // Default to 'usuario' role
                     'estado' => 1,
                 ]
             );
+
+            // Update profile picture if user already exists
+            if (!$user->wasRecentlyCreated && isset($googleUser['picture'])) {
+                $user->perfil = $googleUser['picture'];
+                $user->save();
+            }
 
             // Check user status
             if ($user->estado !== 1) {

@@ -33,6 +33,7 @@ class User extends Authenticatable implements JWTSubject
     protected $fillable = [
         'username',
         'name',
+        'perfil',
         'idRol',
         'estado'
     ];
@@ -71,6 +72,8 @@ class User extends Authenticatable implements JWTSubject
         return [
             'rol' => $this->rol()->first()->nombre,
             'username' => $this->username,
+            'name' => $this->name,
+            'perfil' => $this->perfil,
         ];
     }
 
