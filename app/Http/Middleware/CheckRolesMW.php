@@ -17,9 +17,9 @@ class CheckRolesMW
      */
     public function handle(Request $request, Closure $next, ...$roles)
     {
-        // Si no se pasan roles como parámetros, permitimos los roles cliente y manager por defecto
+        // Si no se pasan roles como parámetros, permitimos los roles usuario, admin y recolector por defecto
         if (empty($roles)) {
-            $roles = ['cliente', 'admin' ,'asesor' , 'auditor' , 'superadmin', 'cajero'];
+            $roles = ['usuario', 'admin' ,'recolector'];
         }
 
         // Verificar que el usuario está autenticado y el payload está disponible

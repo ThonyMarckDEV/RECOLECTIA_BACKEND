@@ -1,10 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
-
-use App\Http\Controllers\Auth\ResetPassword\PasswordResetController;
-
-
+use App\Http\Controllers\Locations\LocationsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/google-login', [AuthController::class, 'googleLogin']);
@@ -29,9 +26,9 @@ Route::middleware(['auth.jwt', 'checkRoleMW:usuario'])->group(function () {
 });
 
 // RUTAS PARA recolector VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
-Route::middleware(['auth.jwt', 'checkRoleMW:usuario'])->group(function () { 
+Route::middleware(['auth.jwt', 'checkRoleMW:recolector'])->group(function () { 
 
- 
+ Route::post('/update-location', [LocationsController::class, 'updateLocation']);
 
 });
 
