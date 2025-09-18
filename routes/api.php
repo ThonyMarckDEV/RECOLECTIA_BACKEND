@@ -20,15 +20,15 @@ Route::middleware(['auth.jwt', 'checkRoleMW:admin'])->group(function () {
 
 // RUTAS PARA usuario VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
 Route::middleware(['auth.jwt', 'checkRoleMW:usuario'])->group(function () { 
-
  
+ Route::get('/locations/getCollector', [LocationsController::class, 'getCollectorLocation']);
 
 });
 
 // RUTAS PARA recolector VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
 Route::middleware(['auth.jwt', 'checkRoleMW:recolector'])->group(function () { 
 
- Route::post('/update-location', [LocationsController::class, 'updateLocation']);
+ Route::post('/locations/update', [LocationsController::class, 'updateLocation']);
 
 });
 

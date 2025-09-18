@@ -38,4 +38,30 @@ class LocationsController extends Controller
             'message' => 'Ubicación actualizada exitosamente',
         ], 200);
     }
+
+    /**
+     * Get the collector's location.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCollectorLocation()
+    {
+        $collector = Location::join('usuarios', 'locations.idUsuario', '=', 'usuarios.idUsuario')
+            ->join('roles', 'usuarios.idRol', '=', 'roles.idRol')
+            ->where('roles.nombre', 'recolector')
+            ->select('locations.latitude', 'locations.longitude')
+           // ->orderBy('locations.created_at', 'desc') // Specify table for created_at
+            ->first();
+
+        if (!$collector) {
+            return response()->json([
+                'message' => 'No se encontró la ubicación del recolector',
+            ], 404);
+        }
+
+        return response()->json([
+            'latitude' => $collector->latitude,
+            'longitude' => $collector->longitude,
+        ], 200);
+    }
 }
