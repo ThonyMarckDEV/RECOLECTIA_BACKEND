@@ -16,6 +16,7 @@ class RecolectorController extends Controller
             $request->validate([
                 'username' => 'required|string|unique:usuarios,username|max:255',
                 'name' => 'required|string|max:255',
+                'password' => 'required|string|min:8',
                 'estado' => 'required|in:0,1',
             ]);
 
@@ -23,6 +24,7 @@ class RecolectorController extends Controller
             $user = User::create([
                 'username' => $request->input('username'),
                 'name' => $request->input('name'),
+                'password' => bcrypt($request->input('password')),
                 'perfil' => null,
                 'idRol' => 3, // Fijo para recolectores
                 'estado' => $request->input('estado'),

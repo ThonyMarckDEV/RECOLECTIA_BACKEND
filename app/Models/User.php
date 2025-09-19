@@ -11,39 +11,23 @@ class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable;
 
-    /**
-     * La tabla asociada con el modelo.
-     *
-     * @var string
-     */
     protected $table = 'usuarios';
-
-    /**
-     * La clave primaria asociada con la tabla.
-     *
-     * @var string
-     */
     protected $primaryKey = 'idUsuario';
 
-    /**
-     * Los atributos que se pueden asignar de manera masiva.
-     *
-     * @var array<string>
-     */
     protected $fillable = [
         'username',
         'name',
+        'password',
         'perfil',
         'idRol',
         'estado',
         'recolectPoints',
     ];
 
-    /**
-     * Obtener los atributos que deben ser convertidos.
-     *
-     * @return array<string, string>
-     */
+    protected $hidden = [
+        'password',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -53,21 +37,11 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
-    /**
-     * Get the identifier that will be stored in the subject claim of the JWT.
-     *
-     * @return mixed
-     */
     public function getJWTIdentifier()
     {
         return $this->getKey();
     }
 
-    /**
-     * Return a key value array, containing any custom claims to be added to the JWT.
-     *
-     * @return array
-     */
     public function getJWTCustomClaims()
     {
         return [
@@ -79,9 +53,6 @@ class User extends Authenticatable implements JWTSubject
         ];
     }
 
-    /**
-     * Relación con el rol
-     */
     public function rol()
     {
         return $this->belongsTo(Rol::class, 'idRol', 'idRol');
