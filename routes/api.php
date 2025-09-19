@@ -20,6 +20,8 @@ Route::middleware(['auth.jwt', 'checkRoleMW:admin'])->group(function () {
 
 //RUTAS PARA RECOLECTORES
  Route::post('/recolectores/create', [RecolectorController::class, 'store']);
+ Route::get('/recolectores/index', [RecolectorController::class, 'index']);
+ Route::put('/recolectores/update/{id}', [RecolectorController::class, 'update']);
 
 });
 

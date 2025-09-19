@@ -9,6 +9,28 @@ use Illuminate\Support\Facades\Auth;
 
 class RecolectorController extends Controller
 {
+
+    public function index(Request $request)
+    {
+        try {
+            // Obtener todos los usuarios con idRol = 3 (recolectores)
+            $recolectores = User::where('idRol', 3)
+                ->select('idUsuario', 'username', 'name', 'estado')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'message' => 'Recolectores obtenidos exitosamente',
+                'data' => $recolectores,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al obtener los recolectores: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         try {
