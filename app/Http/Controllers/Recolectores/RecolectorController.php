@@ -71,4 +71,43 @@ class RecolectorController extends Controller
             ], 500);
         }
     }
+
+     public function update(Request $request, $idUsuario)
+    {
+        try {
+            // Validar la solicitud
+            $request->validate([
+                'username' => 'required|string|unique:usuarios,username,' . $idUsuario . ',idUsuario|max:255',
+                'name' => 'required|string|max:255',
+                'password' => 'nullable|string|min:8',
+                'estado' => 'required|in:0,1',
+            ]);
+
+            // Buscar el usuario (recolector)
+            $user = User::where('idRol', 3)->findOrFail($idUsuario);
+
+            // Actualizar los datos
+            $user->update([
+                'username' => $request->input('username'),
+                'name' => $request->input('name'),
+                'password' => $request->input('password') ? bcrypt($request->input('password')) : $user->password,
+                'estado' => $request->input('estado'),
+            ]);
+
+            return response()->json([
+                'message' => 'Recolector actualizado exitosamente',
+                'data' => [
+                    'idUsuario' => $user->idUsuario,
+                    'username' => $user->username,
+                    'name' => $user->name,
+                    'estado' => $user->estado,
+                ],
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al actualizar el recolector: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
