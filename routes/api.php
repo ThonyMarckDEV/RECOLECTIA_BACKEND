@@ -25,6 +25,7 @@ Route::middleware(['auth.jwt', 'checkRoleMW:usuario'])->group(function () {
  Route::get('/locations/getCollector', [LocationsController::class, 'getCollectorLocation']);
 
  Route::post('/reports/create', [ReportController::class, 'store']);
+ Route::get('/reports/list', [ReportController::class, 'index']);
 
 });
 

@@ -11,6 +11,35 @@ use Carbon\Carbon;
 
 class ReportController extends Controller
 {
+
+    public function index(Request $request)
+    {
+        try {
+            $userId = $request->query('userId');
+            
+            // Validar que userId exista en la tabla usuarios
+            $request->validate([
+                'userId' => 'required|exists:usuarios,idUsuario',
+            ]);
+
+            // Obtener los reportes del usuario
+            $reportes = Report::where('idUsuario', $userId)
+                ->select('id', 'idUsuario', 'description', 'image_url', 'latitude', 'longitude', 'status', 'fecha', 'hora', 'created_at', 'updated_at')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'message' => 'Reportes obtenidos exitosamente',
+                'data' => $reportes,
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al obtener los reportes: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         // Validar la solicitud
