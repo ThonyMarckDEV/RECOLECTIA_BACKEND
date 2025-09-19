@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
@@ -15,7 +16,7 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         try {
-            $userId = $request->query('userId');
+            $userId = Auth::id();
             
             // Validar que userId exista en la tabla usuarios
             $request->validate([

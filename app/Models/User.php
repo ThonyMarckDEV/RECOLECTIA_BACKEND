@@ -35,9 +35,9 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'perfil',
         'idRol',
-        'estado'
+        'estado',
+        'recolectPoints',
     ];
-
 
     /**
      * Obtener los atributos que deben ser convertidos.
@@ -49,6 +49,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'recolectPoints' => 'integer',
         ];
     }
 
@@ -74,6 +75,7 @@ class User extends Authenticatable implements JWTSubject
             'username' => $this->username,
             'name' => $this->name,
             'perfil' => $this->perfil,
+            'recolectPoints' => $this->recolectPoints,
         ];
     }
 
@@ -84,5 +86,4 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Rol::class, 'idRol', 'idRol');
     }
-
 }
