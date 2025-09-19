@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Http\Controllers\Auth\Services\GoogleService;
-use App\Http\Controllers\Auth\Services\TokenService;
-use App\Http\Controllers\Auth\Utilities\AuthValidations;
+use App\Http\Controllers\Auth\services\GoogleService;
+use App\Http\Controllers\Auth\services\TokenService;
+use App\Http\Controllers\Auth\utilities\AuthValidations;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Http\Request;

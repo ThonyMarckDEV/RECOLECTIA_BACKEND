@@ -15,36 +15,49 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set the working directory
 WORKDIR /var/www
 
-# Copy essential files for Composer and Laravel
-COPY composer.json composer.lock artisan /var/www/
-COPY bootstrap /var/www/bootstrap
-COPY routes /var/www/routes
-
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install PHP dependencies without development environment
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+# Copiar composer.json y artisan
+COPY composer.json composer.lock artisan /var/www/
 
-# Copy the rest of the application
+# Copiar bootstrap (para app.php) y config (para package:discover)
+COPY bootstrap /var/www/bootstrap
+COPY config /var/www/config
+
+# Copy artisan para que exista cuando composer lo necesite
+COPY artisan /var/www/
+
+# Crear carpetas necesarias
+RUN mkdir -p bootstrap/cache storage/framework/{sessions,views,cache} storage/logs
+
+# Instalar dependencias PHP
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
+
+# Ahora sí copia el resto del proyecto
 COPY . .
 
-# Adjust permissions for Laravel storage and cache directories
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# Ajustar permisos para Laravel
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Entrypoint que corre migraciones, crea enlace simbólico y arranca el servidor
 RUN echo '#!/bin/bash\n\
+set -e\n\
+php artisan package:discover --ansi || true\n\
 php artisan config:clear\n\
 php artisan migrate --force || true\n\
 php artisan storage:link || true\n\
 php artisan config:cache\n\
-php artisan serve --host=0.0.0.0 --port=8000' > /entrypoint.sh && chmod +x /entrypoint.sh
+exec php artisan serve --host=0.0.0.0 --port=8000' > /entrypoint.sh \
+    && chmod +x /entrypoint.sh
 
 EXPOSE 8000
 
-# Opcionalmente antes del ENTRYPOINT o CMD
+# Config PHP (subidas, tiempo de ejecución, etc.)
 RUN echo "upload_max_filesize=100M\n\
 post_max_size=100M\n\
 max_file_uploads=20\n\
 max_execution_time=300" > /usr/local/etc/php/conf.d/uploads.ini
+
 CMD ["/entrypoint.sh"]
