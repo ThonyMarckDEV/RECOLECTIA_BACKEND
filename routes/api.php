@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Locations\LocationsController;
+use App\Http\Controllers\Reports\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/google-login', [AuthController::class, 'googleLogin']);
@@ -22,6 +23,8 @@ Route::middleware(['auth.jwt', 'checkRoleMW:admin'])->group(function () {
 Route::middleware(['auth.jwt', 'checkRoleMW:usuario'])->group(function () { 
  
  Route::get('/locations/getCollector', [LocationsController::class, 'getCollectorLocation']);
+
+ Route::post('/reports/create', [ReportController::class, 'store']);
 
 });
 
