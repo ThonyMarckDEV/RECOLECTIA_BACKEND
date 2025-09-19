@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Reports;
 
+use App\Http\Controllers\Reports\utilities\ReportValidations;
 use App\Models\Report;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -12,17 +13,11 @@ use Illuminate\Support\Facades\Auth;
 
 class ReportController extends Controller
 {
-
     public function index(Request $request)
     {
         try {
             $userId = Auth::id();
             
-            // Validar que userId exista en la tabla usuarios
-            $request->validate([
-                'userId' => 'required|exists:usuarios,idUsuario',
-            ]);
-
             // Obtener los reportes del usuario
             $reportes = Report::where('idUsuario', $userId)
                 ->select('id', 'idUsuario', 'description', 'image_url', 'latitude', 'longitude', 'status', 'fecha', 'hora', 'created_at', 'updated_at')
@@ -53,7 +48,17 @@ class ReportController extends Controller
         ]);
 
         try {
-            // Decodificar la imagen base64
+            // Verificar si el usuario tiene reportes pendientes
+            $userId = $request->input('idUsuario');
+            $validation = ReportValidations::validateUserCanReport($userId);
+            
+            if (!$validation['can_report']) {
+                return response()->json([
+                    'message' => $validation['message']
+                ], 422);
+            }
+
+            // Procesar la imagen
             $photoData = $request->input('photo');
             $photoData = str_replace('data:image/jpeg;base64,', '', $photoData);
             $photoData = str_replace(' ', '+', $photoData);
@@ -66,7 +71,6 @@ class ReportController extends Controller
             }
 
             // Generar nombre único para la imagen
-            $userId = $request->input('idUsuario');
             $imageName = 'report_' . Str::random(10) . '.jpg';
             $imagePath = "usuarios/{$userId}/reportes/{$imageName}";
 

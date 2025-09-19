@@ -15,7 +15,7 @@ class CreateReportsTable extends Migration
             $table->string('image_url')->nullable();
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
-            $table->tinyInteger('status')->default(0); // 0: pendiente, 1: aceptado, 2: resuelto, 3: rechazado
+            $table->tinyInteger('status')->default(0)->comment('0: pendiente, 1: aceptado, 2: resuelto, 3: rechazado');
             $table->date('fecha');
             $table->time('hora');
             $table->timestamps();
