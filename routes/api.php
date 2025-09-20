@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Locations\LocationsController;
 use App\Http\Controllers\Recolectores\RecolectorController;
 use App\Http\Controllers\Reports\ReportController;
@@ -26,6 +27,9 @@ Route::middleware(['auth.jwt', 'checkRoleMW:admin'])->group(function () {
  //RUTAS PARA REPORTES
  Route::get('/reports/all', [ReportController::class, 'index']);
  Route::put('/reports/update-status/{id}', [ReportController::class, 'updateStatus']);
+
+ //RUTAS PARA DASHBOARD
+  Route::get('/admin/dashboard', [DashboardController::class, 'getDashboardMetrics']);
 });
 
 // RUTAS PARA usuario VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
