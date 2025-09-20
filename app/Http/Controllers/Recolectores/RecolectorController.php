@@ -13,9 +13,12 @@ class RecolectorController extends Controller
     public function index(Request $request)
     {
         try {
-            // Obtener todos los usuarios con idRol = 3 (recolectores)
+            // Obtener todos los usuarios con idRol = 3 (recolectores), cargando la relación con zona
             $recolectores = User::where('idRol', 3)
-                ->select('idUsuario', 'username', 'name', 'estado')
+                ->with(['zona' => function ($query) {
+                    $query->select('id', 'nombre', 'descripcion'); // Selecciona solo campos necesarios de zona
+                }])
+                ->select('idUsuario', 'username', 'name', 'estado', 'idZona')
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -40,6 +43,7 @@ class RecolectorController extends Controller
                 'name' => 'required|string|max:255',
                 'password' => 'required|string|min:8',
                 'estado' => 'required|in:0,1',
+                'idZona' => 'required|integer|exists:zonas,id',
             ]);
 
             // Crear el usuario con idRol = 3 (recolector)
@@ -49,6 +53,7 @@ class RecolectorController extends Controller
                 'password' => bcrypt($request->input('password')),
                 'perfil' => null,
                 'idRol' => 3, // Fijo para recolectores
+                'idZona' => $request->input('idZona'),
                 'estado' => $request->input('estado'),
                 'recolectPoints' => 0, // Por defecto
             ]);
@@ -60,6 +65,7 @@ class RecolectorController extends Controller
                     'username' => $user->username,
                     'name' => $user->name,
                     'perfil' => $user->perfil,
+                    'idZona' => $user->idZona,
                     'estado' => $user->estado,
                     'recolectPoints' => $user->recolectPoints,
                 ],
@@ -81,6 +87,7 @@ class RecolectorController extends Controller
                 'name' => 'required|string|max:255',
                 'password' => 'nullable|string|min:8',
                 'estado' => 'required|in:0,1',
+                'idZona' => 'required|integer|exists:zonas,id',
             ]);
 
             // Buscar el usuario (recolector)
@@ -91,6 +98,7 @@ class RecolectorController extends Controller
                 'username' => $request->input('username'),
                 'name' => $request->input('name'),
                 'password' => $request->input('password') ? bcrypt($request->input('password')) : $user->password,
+                'idZona' => $request->input('idZona'),
                 'estado' => $request->input('estado'),
             ]);
 
@@ -100,6 +108,7 @@ class RecolectorController extends Controller
                     'idUsuario' => $user->idUsuario,
                     'username' => $user->username,
                     'name' => $user->name,
+                    'idZona' => $user->idZona,
                     'estado' => $user->estado,
                 ],
             ], 200);

@@ -58,4 +58,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Rol::class, 'idRol', 'idRol');
     }
+
+    public function zona()
+    {
+        return $this->belongsTo(Zona::class, 'idZona', 'id');
+    }
 }
