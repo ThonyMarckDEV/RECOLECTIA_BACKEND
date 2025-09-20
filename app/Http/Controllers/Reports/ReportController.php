@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Reports;
 use App\Http\Controllers\Reports\utilities\ReportValidations;
 use App\Models\Report;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -169,9 +170,27 @@ class ReportController extends Controller
             ]);
 
             $report = Report::findOrFail($id);
+            $newStatus = $request->input('status');
+            $oldStatus = $report->status;
+
             $report->update([
-                'status' => $request->input('status'),
+                'status' => $newStatus,
             ]);
+
+            // Update user's recolectPoints based on status change
+            if ($newStatus == 1 && $oldStatus != 1) {
+                $user = User::find($report->idUsuario);
+                if ($user) {
+                    $user->recolectPoints += 100;
+                    $user->save();
+                }
+            } elseif ($newStatus == 2 && $oldStatus != 2) {
+                $user = User::find($report->idUsuario);
+                if ($user) {
+                    $user->recolectPoints += 200;
+                    $user->save();
+                }
+            }
 
             return response()->json([
                 'message' => 'Estado del reporte actualizado exitosamente',
