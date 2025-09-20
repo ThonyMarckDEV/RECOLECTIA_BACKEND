@@ -39,23 +39,32 @@ class LocationsController extends Controller
         ], 200);
     }
 
-    /**
-     * Get the collector's location.
+   /**
+     * Get the collector's location in the same zone as the authenticated user.
      *
      * @return \Illuminate\Http\JsonResponse
      */
     public function getCollectorLocation()
     {
+        $user = Auth::user();
+        $idZona = $user->idZona;
+
+        if (!$idZona) {
+            return response()->json([
+                'message' => 'El usuario no tiene una zona asignada',
+            ], 400);
+        }
+
         $collector = Location::join('usuarios', 'locations.idUsuario', '=', 'usuarios.idUsuario')
             ->join('roles', 'usuarios.idRol', '=', 'roles.idRol')
             ->where('roles.nombre', 'recolector')
+            ->where('usuarios.idZona', $idZona)
             ->select('locations.latitude', 'locations.longitude')
-           // ->orderBy('locations.created_at', 'desc') // Specify table for created_at
             ->first();
 
         if (!$collector) {
             return response()->json([
-                'message' => 'No se encontró la ubicación del recolector',
+                'message' => 'No se encontró la ubicación del recolector en esta zona',
             ], 404);
         }
 
