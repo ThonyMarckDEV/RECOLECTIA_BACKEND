@@ -21,12 +21,36 @@ class UserController extends Controller
                     'name' => $user->name,
                     'perfil' => $user->perfil,
                     'recolectPoints' => $user->recolectPoints,
+                    'idZona' => $user->idZona,
                 ],
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Error al obtener el perfil: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updateZona(Request $request)
+    {
+        try {
+            $request->validate([
+                'idZona' => 'required|integer|exists:zonas,id',
+            ]);
+
+            $user = Auth::user();
+            $user->update([
+                'idZona' => $request->input('idZona'),
+            ]);
+
+            return response()->json([
+                'message' => 'Zona actualizada exitosamente',
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error al actualizar la zona: ' . $e->getMessage(),
             ], 500);
         }
     }
