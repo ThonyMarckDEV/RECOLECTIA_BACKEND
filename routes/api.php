@@ -23,6 +23,9 @@ Route::middleware(['auth.jwt', 'checkRoleMW:admin'])->group(function () {
  Route::get('/recolectores/index', [RecolectorController::class, 'index']);
  Route::put('/recolectores/update/{id}', [RecolectorController::class, 'update']);
 
+ //RUTAS PARA REPORTES
+ Route::get('/reports/all', [ReportController::class, 'index']);
+ Route::put('/reports/update-status/{id}', [ReportController::class, 'updateStatus']);
 });
 
 // RUTAS PARA usuario VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
@@ -34,6 +37,7 @@ Route::middleware(['auth.jwt', 'checkRoleMW:usuario'])->group(function () {
 //RUTAS PARA REPORTES
  Route::post('/reports/create', [ReportController::class, 'store']);
  Route::get('/reports/list', [ReportController::class, 'index']);
+ 
 
 //RUTAS PARA USUARIO
 Route::get('/user/profile', [UserController::class, 'profile']);

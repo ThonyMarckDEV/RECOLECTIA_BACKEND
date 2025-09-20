@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Reports;
 
-use App\Models\Report;
 use App\Http\Controllers\Reports\utilities\ReportValidations;
+use App\Models\Report;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -17,29 +17,34 @@ class ReportController extends Controller
     {
         try {
             $user = Auth::user();
-            $query = Report::with('user:idUsuario,name')
+            $userId = $user->idUsuario;
+            $rolId = $user->idRol;
+
+            // Initialize the query for reports with user relationship
+            $query = Report::query()
+                ->with('user:idUsuario,name') // Eager-load user name
                 ->select('id', 'idUsuario', 'description', 'image_url', 'latitude', 'longitude', 'status', 'fecha', 'hora', 'created_at', 'updated_at');
 
-            // Filtrar por idUsuario si el rol es cliente (idRol = 2)
-            if ($user->idRol === 2) {
-                $query->where('idUsuario', $user->idUsuario);
+            // If the user is not an admin (idRol != 1), filter by user ID
+            if ($rolId != 1) {
+                $query->where('idUsuario', $userId);
             }
 
-            // Filtros
-            if ($request->has('status')) {
-                $status = $request->input('status');
-                if (in_array($status, [0, 1, 2, 3])) {
-                    $query->where('status', $status);
-                }
+            // Apply filters if provided
+            if ($request->has('status') && $request->status !== '') {
+                // Only apply status filter if a specific status is provided
+                $query->where('status', $request->status);
             }
 
-            if ($request->has('fecha_inicio') && $request->has('fecha_fin')) {
-                $fechaInicio = $request->input('fecha_inicio');
-                $fechaFin = $request->input('fecha_fin');
-                $query->whereBetween('fecha', [$fechaInicio, $fechaFin]);
+            if ($request->has('fecha_inicio') && $request->fecha_inicio) {
+                $query->whereDate('fecha', '>=', $request->fecha_inicio);
             }
 
-            // Paginación
+            if ($request->has('fecha_fin') && $request->fecha_fin) {
+                $query->whereDate('fecha', '<=', $request->fecha_fin);
+            }
+
+            // Apply pagination
             $perPage = $request->input('per_page', 10);
             $reportes = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
@@ -60,6 +65,7 @@ class ReportController extends Controller
             ], 500);
         }
     }
+
     public function store(Request $request)
     {
         // Validar la solicitud
