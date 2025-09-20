@@ -24,7 +24,7 @@ class DashboardController extends Controller
 
             // Contar métricas
             $totalReports = Report::count();
-            $totalUsers = User::count();
+            $totalUsers = User::where('idRol', 2)->count();
             $totalCollectors = $collectorRoleId ? User::where('idRol', $collectorRoleId)->count() : 0;
             $pendingReports = Report::where('status', 0)->count();
             $acceptedReports = Report::where('status', 1)->count();
