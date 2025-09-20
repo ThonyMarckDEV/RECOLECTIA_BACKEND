@@ -15,11 +15,13 @@ return new class extends Migration {
             $table->integer('recolectPoints')->default(0)->comment('Puntos de recolección del usuario');
             $table->string('password')->nullable();
             $table->unsignedBigInteger('idRol')->default(2); // Por defecto 2 que es cliente
+            $table->unsignedBigInteger('idZona')->nullable();
             $table->boolean('estado')->default(1)->comment('1: Activo, 0: Inactivo');
             $table->timestamps();
             
             // Foreign keys
             $table->foreign('idRol')->references('idRol')->on('roles')->onDelete('restrict');
+            $table->foreign('idZona')->references('id')->on('zonas')->onDelete('restrict');
         });
     }
 
