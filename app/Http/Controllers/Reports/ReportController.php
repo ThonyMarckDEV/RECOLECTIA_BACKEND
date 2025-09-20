@@ -10,19 +10,28 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
-   public function index(Request $request)
+    public function index(Request $request)
     {
         try {
             $user = Auth::user();
             $userId = $user->idUsuario;
             $rolId = $user->idRol;
 
+            // Validate request parameters
+            $request->validate([
+                'status' => 'nullable|in:0,1,2,3', // Allow empty string or valid status values
+                'fecha_inicio' => 'nullable|date',
+                'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
+                'per_page' => 'nullable|integer|min:1|max:100',
+            ]);
+
             // Initialize the query for reports with user relationship
             $query = Report::query()
-                ->with('user:idUsuario,name') // Eager-load user name
+                ->with('user:idUsuario,name')
                 ->select('id', 'idUsuario', 'description', 'image_url', 'latitude', 'longitude', 'status', 'fecha', 'hora', 'created_at', 'updated_at');
 
             // If the user is not an admin (idRol != 1), filter by user ID
@@ -31,22 +40,29 @@ class ReportController extends Controller
             }
 
             // Apply filters if provided
-            if ($request->has('status') && $request->status !== '') {
-                // Only apply status filter if a specific status is provided
+            if ($request->filled('status')) { // Use filled() to check for non-empty values
+                Log::info('Applying status filter', ['status' => $request->status]);
                 $query->where('status', $request->status);
+            } else {
+                Log::info('No status filter applied (Todos selected)');
             }
 
-            if ($request->has('fecha_inicio') && $request->fecha_inicio) {
+            if ($request->filled('fecha_inicio')) {
+                Log::info('Applying fecha_inicio filter', ['fecha_inicio' => $request->fecha_inicio]);
                 $query->whereDate('fecha', '>=', $request->fecha_inicio);
             }
 
-            if ($request->has('fecha_fin') && $request->fecha_fin) {
+            if ($request->filled('fecha_fin')) {
+                Log::info('Applying fecha_fin filter', ['fecha_fin' => $request->fecha_fin]);
                 $query->whereDate('fecha', '<=', $request->fecha_fin);
             }
 
             // Apply pagination
             $perPage = $request->input('per_page', 10);
             $reportes = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            // Log the query for debugging
+            Log::info('Executed query', ['sql' => $query->toSql(), 'bindings' => $query->getBindings(), 'results_count' => $reportes->total()]);
 
             return response()->json([
                 'message' => 'Reportes obtenidos exitosamente',
@@ -60,6 +76,7 @@ class ReportController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
+            Log::error('Error in ReportController::index', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'message' => 'Error al obtener los reportes: ' . $e->getMessage(),
             ], 500);
@@ -70,7 +87,7 @@ class ReportController extends Controller
     {
         // Validar la solicitud
         $request->validate([
-            'photo' => 'required|string', // Base64 string
+            'photo' => 'required|string',
             'description' => 'required|string',
             'idUsuario' => 'required|exists:usuarios,idUsuario',
             'latitude' => 'required|numeric|between:-90,90',
@@ -114,7 +131,7 @@ class ReportController extends Controller
                 'image_url' => Storage::url($imagePath),
                 'latitude' => $request->input('latitude'),
                 'longitude' => $request->input('longitude'),
-                'status' => 0, // Pendiente por defecto
+                'status' => 0,
                 'fecha' => Carbon::now()->toDateString(),
                 'hora' => Carbon::now()->toTimeString(),
             ]);
@@ -137,6 +154,7 @@ class ReportController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
+            Log::error('Error in ReportController::store', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'message' => 'Error al crear el reporte: ' . $e->getMessage(),
             ], 500);
