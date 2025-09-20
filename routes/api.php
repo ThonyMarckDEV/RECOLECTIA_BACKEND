@@ -6,6 +6,7 @@ use App\Http\Controllers\Locations\LocationsController;
 use App\Http\Controllers\Recolectores\RecolectorController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\Zonas\ZonaController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/google-login', [AuthController::class, 'googleLogin']);
@@ -30,6 +31,11 @@ Route::middleware(['auth.jwt', 'checkRoleMW:admin'])->group(function () {
 
  //RUTAS PARA DASHBOARD
   Route::get('/admin/dashboard', [DashboardController::class, 'getDashboardMetrics']);
+
+  //RUTAS PARA ZONAS
+  Route::post('/zona/create', [ZonaController::class, 'store']);
+  Route::get('/zona/list', [ZonaController::class, 'index']);
+  Route::put('/zona/update/{id}', [ZonaController::class, 'update']);
 });
 
 // RUTAS PARA usuario VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
