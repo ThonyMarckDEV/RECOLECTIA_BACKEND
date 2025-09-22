@@ -116,6 +116,7 @@ class TokenService
             'username' => $user->username,
             'nombre' => $user->name ?? 'N/A',
             'email' => $user->username ?? 'N/A',
+            'perfil' => $user->perfil ?? 'N/A',
             'idZona' => $user->idZona ?? null,
         ];
 
