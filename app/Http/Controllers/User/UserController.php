@@ -22,6 +22,7 @@ class UserController extends Controller
                     'perfil' => $user->perfil,
                     'recolectPoints' => $user->recolectPoints,
                     'idZona' => $user->idZona,
+                    'zona' => $user->zona->nombre,
                 ],
             ], 200);
 
