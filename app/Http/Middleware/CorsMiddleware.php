@@ -10,8 +10,7 @@ class CorsMiddleware
     {
         $allowedOrigins = [
             'http://localhost:3000',
-            'http://192.168.18.47:8005',
-            'https://ficsullana-querecotillo.vercel.app'
+            'https://recolectia.vercel.app'
         ];
 
         $origin = $request->headers->get('Origin');
