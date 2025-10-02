@@ -32,10 +32,13 @@ Route::middleware(['auth.jwt', 'checkRoleMW:admin'])->group(function () {
 
  //RUTAS PARA DASHBOARD
   Route::get('/admin/dashboard', [DashboardController::class, 'getDashboardMetrics']);
+  Route::get('/admin/percapita-summary', [DashboardController::class, 'getPerCapitaSummary']);
 
   //RUTAS PARA ZONAS
   Route::post('/zona/create', [ZonaController::class, 'store']);
   Route::put('/zona/update/{id}', [ZonaController::class, 'update']);
+
+  
 });
 
 // RUTAS PARA usuario VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
