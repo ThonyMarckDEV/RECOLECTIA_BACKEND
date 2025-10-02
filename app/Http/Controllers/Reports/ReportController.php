@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class ReportController extends Controller
 {
@@ -86,39 +88,29 @@ class ReportController extends Controller
 
     public function store(Request $request)
     {
-        // Validar la solicitud
-        $request->validate([
-            'photo' => 'required|string',
-            'description' => 'required|string',
-            'idUsuario' => 'required|exists:usuarios,idUsuario',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-        ]);
-
         try {
-            // Verificar si el usuario tiene reportes pendientes
-            $userId = $request->input('idUsuario');
-            $validation = ReportValidations::validateUserCanReport($userId);
+            // 1. Valida todo de una sola vez usando nuestra nueva clase.
+            $validationData = ReportValidations::store();
+            $validator = Validator::make($request->all(), $validationData['rules'], $validationData['messages']);
             
-            if (!$validation['can_report']) {
-                return response()->json([
-                    'message' => $validation['message']
-                ], 422);
+            if ($validator->fails()) {
+                throw new ValidationException($validator);
             }
 
+            // Si la validación pasa, el código continúa...
+            $validatedData = $validator->validated();
+            $userId = $validatedData['idUsuario'];
+
             // Procesar la imagen
-            $photoData = $request->input('photo');
+            $photoData = $validatedData['photo'];
             $photoData = str_replace('data:image/jpeg;base64,', '', $photoData);
             $photoData = str_replace(' ', '+', $photoData);
             $image = base64_decode($photoData);
 
             if ($image === false) {
-                return response()->json([
-                    'message' => 'Error al decodificar la imagen'
-                ], 400);
+                return response()->json(['message' => 'Error al decodificar la imagen'], 400);
             }
 
-            // Generar nombre único para la imagen
             $imageName = 'report_' . Str::random(10) . '.jpg';
             $imagePath = "usuarios/{$userId}/reportes/{$imageName}";
 
@@ -128,18 +120,18 @@ class ReportController extends Controller
             // Crear el reporte
             $report = Report::create([
                 'idUsuario' => $userId,
-                'description' => $request->input('description'),
+                'description' => $validatedData['description'],
                 'image_url' => Storage::url($imagePath),
-                'latitude' => $request->input('latitude'),
-                'longitude' => $request->input('longitude'),
+                'latitude' => $validatedData['latitude'],
+                'longitude' => $validatedData['longitude'],
                 'status' => 0,
                 'fecha' => Carbon::now()->toDateString(),
                 'hora' => Carbon::now()->toTimeString(),
             ]);
-
+            
             // Generar enlace simbólico para la URL requerida
-            $symbolicLinkPath = public_path("usuarios/{$userId}/reportes/{$report->id}/imagen");
-            $targetPath = storage_path("app/public/{$imagePath}");
+                $symbolicLinkPath = public_path("usuarios/{$userId}/reportes/{$report->id}/imagen");
+                $targetPath = storage_path("app/public/{$imagePath}");
 
             // Crear directorios si no existen
             if (!file_exists(dirname($symbolicLinkPath))) {
@@ -151,14 +143,18 @@ class ReportController extends Controller
 
             return response()->json([
                 'message' => 'Reporte creado exitosamente',
-                'report' => $report,
+                'data' => $report,
             ], 201);
 
-        } catch (\Exception $e) {
-            Log::error('Error in ReportController::store', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+        } catch (ValidationException $e) {
+            // Devuelve una respuesta 422 con todos los errores detallados.
             return response()->json([
-                'message' => 'Error al crear el reporte: ' . $e->getMessage(),
-            ], 500);
+                'message' => 'Los datos proporcionados no son válidos.', 
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error in ReportController::store', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Error al crear el reporte.'], 500);
         }
     }
 
