@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Reports;
 
-use App\Http\Controllers\Reports\utilities\ReportValidations;
+use App\Http\Controllers\Reports\utilities\validations\ReportValidations;
 use App\Models\Report;
 use App\Http\Controllers\Controller;
 use App\Models\User;

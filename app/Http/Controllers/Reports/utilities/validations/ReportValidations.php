@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Reports\utilities;
+namespace App\Http\Controllers\Reports\utilities\validations;
 
 use App\Models\Report;
 
