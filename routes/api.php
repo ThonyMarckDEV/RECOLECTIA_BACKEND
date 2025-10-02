@@ -58,6 +58,7 @@ Route::middleware(['auth.jwt', 'checkRoleMW:usuario'])->group(function () {
     //RUTAS PARA FORMULA PER CAPITA
     Route::get('/perCapita/check-today', [PerCapitaController::class, 'checkToday']);
     Route::post('/perCapita/create', [PerCapitaController::class, 'store']);
+    Route::get('/perCapita/myrecords', [PerCapitaController::class, 'index']);
 });
 
 // RUTAS PARA recolector VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)

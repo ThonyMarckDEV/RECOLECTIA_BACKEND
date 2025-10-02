@@ -59,4 +59,46 @@ class PerCapitaController extends Controller
             return response()->json(['message' => 'Error al guardar el registro.'], 500);
         }
     }
+
+   /**
+     * Devuelve los registros paginados del usuario autenticado y un resumen total.
+     */
+    public function index(Request $request)
+    {
+        try {
+            $userId = Auth::id();
+            $perPage = 2; // Registros por página, puedes ajustarlo
+
+            // 1. Creamos la consulta base sin ejecutarla
+            $baseQuery = PerCapitaRecord::where('idUsuario', $userId);
+
+            // 2. Calculamos los totales usando la consulta base (sobre todos los registros)
+            $total_days = $baseQuery->count();
+            $total_weight_kg = $baseQuery->sum('weight_kg');
+
+            // 3. Ahora sí, aplicamos orden y paginación a la consulta
+            $recordsPaginados = $baseQuery->orderBy('record_date', 'desc')
+                                        ->select('record_date', 'weight_kg')
+                                        ->paginate($perPage);
+
+            // 4. Devolvemos una respuesta estructurada con los datos y la paginación
+            return response()->json([
+                'message' => 'Registros obtenidos exitosamente',
+                'data' => $recordsPaginados->items(), // Los registros de la página actual
+                'summary' => [
+                    'total_days' => $total_days,
+                    'total_weight_kg' => (float) $total_weight_kg, 
+                ],
+                'pagination' => [
+                    'current_page' => $recordsPaginados->currentPage(),
+                    'last_page' => $recordsPaginados->lastPage(),
+                    'per_page' => $recordsPaginados->perPage(),
+                    'total' => $recordsPaginados->total(),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al obtener tus registros.'], 500);
+        }
+    }
 }
