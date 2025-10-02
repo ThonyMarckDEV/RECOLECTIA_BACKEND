@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Locations\LocationsController;
+use App\Http\Controllers\PerCapita\PerCapitaController;
 use App\Http\Controllers\Recolectores\RecolectorController;
 use App\Http\Controllers\Reports\ReportController;
 use App\Http\Controllers\User\UserController;
@@ -40,26 +41,30 @@ Route::middleware(['auth.jwt', 'checkRoleMW:admin'])->group(function () {
 // RUTAS PARA usuario VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
 Route::middleware(['auth.jwt', 'checkRoleMW:usuario'])->group(function () { 
  
-//RUTAS PARA LOCACIONES
- Route::get('/locations/getCollector', [LocationsController::class, 'getCollectorLocation']);
+    //RUTAS PARA LOCACIONES
+    Route::get('/locations/getCollector', [LocationsController::class, 'getCollectorLocation']);
 
-//RUTAS PARA REPORTES
- Route::post('/reports/create', [ReportController::class, 'store']);
- Route::get('/reports/list', [ReportController::class, 'index']);
- 
+    //RUTAS PARA REPORTES
+    Route::post('/reports/create', [ReportController::class, 'store']);
+    Route::get('/reports/list', [ReportController::class, 'index']);
+    
 
-//RUTAS PARA USUARIO
-Route::get('/user/profile', [UserController::class, 'profile']);
+    //RUTAS PARA USUARIO
+    Route::get('/user/profile', [UserController::class, 'profile']);
 
-//RUTA PARA ASIGNAR ZONA AL USUARIO
-Route::put('/user/update-zona', [UserController::class, 'updateZona']);
+    //RUTA PARA ASIGNAR ZONA AL USUARIO
+    Route::put('/user/update-zona', [UserController::class, 'updateZona']);
+
+    //RUTAS PARA FORMULA PER CAPITA
+    Route::get('/perCapita/check-today', [PerCapitaController::class, 'checkToday']);
+    Route::post('/perCapita/create', [PerCapitaController::class, 'store']);
 });
 
 // RUTAS PARA recolector VALIDADA POR MIDDLEWARE AUTH (PARA TOKEN JWT) Y CHECKROLE (PARA VALIDAR ROL DEL TOKEN)
 Route::middleware(['auth.jwt', 'checkRoleMW:recolector'])->group(function () { 
 
-//RUTAS PARA LOCACIONES
- Route::post('/locations/update', [LocationsController::class, 'updateLocation']);
+  //RUTAS PARA LOCACIONES
+  Route::post('/locations/update', [LocationsController::class, 'updateLocation']);
 
 });
 
