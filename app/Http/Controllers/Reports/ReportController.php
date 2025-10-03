@@ -89,7 +89,7 @@ class ReportController extends Controller
     public function store(Request $request)
     {
         try {
-            // 1. Valida todo de una sola vez usando nuestra nueva clase.
+            // 1. Validar todo de una sola vez
             $validationData = ReportValidations::store();
             $validator = Validator::make($request->all(), $validationData['rules'], $validationData['messages']);
             
@@ -97,7 +97,6 @@ class ReportController extends Controller
                 throw new ValidationException($validator);
             }
 
-            // Si la validación pasa, el código continúa...
             $validatedData = $validator->validated();
             $userId = $validatedData['idUsuario'];
 
@@ -111,53 +110,43 @@ class ReportController extends Controller
                 return response()->json(['message' => 'Error al decodificar la imagen'], 400);
             }
 
+            // Nombre y ruta
             $imageName = 'report_' . Str::random(10) . '.jpg';
             $imagePath = "usuarios/{$userId}/reportes/{$imageName}";
 
-            // Guardar la imagen en storage
+            // Guardar en storage/app/public/usuarios/...
             Storage::disk('public')->put($imagePath, $image);
+
+            // Generar URL pública (/storage/usuarios/...)
+            $imageUrl = Storage::url($imagePath);
 
             // Crear el reporte
             $report = Report::create([
-                'idUsuario' => $userId,
+                'idUsuario'   => $userId,
                 'description' => $validatedData['description'],
-                'image_url' => Storage::url($imagePath),
-                'latitude' => $validatedData['latitude'],
-                'longitude' => $validatedData['longitude'],
-                'status' => 0,
-                'fecha' => Carbon::now()->toDateString(),
-                'hora' => Carbon::now()->toTimeString(),
+                'image_url'   => $imageUrl,
+                'latitude'    => $validatedData['latitude'],
+                'longitude'   => $validatedData['longitude'],
+                'status'      => 0,
+                'fecha'       => Carbon::now()->toDateString(),
+                'hora'        => Carbon::now()->toTimeString(),
             ]);
-            
-            // Generar enlace simbólico para la URL requerida
-                $symbolicLinkPath = public_path("usuarios/{$userId}/reportes/{$report->id}/imagen");
-                $targetPath = storage_path("app/public/{$imagePath}");
-
-            // Crear directorios si no existen
-            if (!file_exists(dirname($symbolicLinkPath))) {
-                mkdir(dirname($symbolicLinkPath), 0755, true);
-            }
-
-            // Crear enlace simbólico
-            symlink($targetPath, $symbolicLinkPath);
 
             return response()->json([
                 'message' => 'Reporte creado exitosamente',
-                'data' => $report,
+                'data'    => $report,
             ], 201);
 
         } catch (ValidationException $e) {
-            // Devuelve una respuesta 422 con todos los errores detallados.
             return response()->json([
                 'message' => 'Los datos proporcionados no son válidos.', 
-                'errors' => $e->errors()
+                'errors'  => $e->errors()
             ], 422);
         } catch (\Exception $e) {
             Log::error('Error in ReportController::store', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Error al crear el reporte.'], 500);
         }
     }
-
     public function updateStatus(Request $request, $id)
     {
         try {
