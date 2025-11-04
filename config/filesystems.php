@@ -56,7 +56,7 @@ return [
             'bucket' => env('MINIO_BUCKET'),
             'endpoint' => env('MINIO_ENDPOINT'),
             'use_path_style_endpoint' => env('MINIO_USE_PATH_STYLE_ENDPOINT', true),
-            'throw' => true,
+            'throw' => false,
             'url' => env('MINIO_URL'), 
         ],
 
