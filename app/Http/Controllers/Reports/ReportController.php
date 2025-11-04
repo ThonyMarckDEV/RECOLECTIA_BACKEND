@@ -89,7 +89,6 @@ class ReportController extends Controller
     public function store(Request $request)
     {
         try {
-            // 1. Validar todo de una sola vez
             $validationData = ReportValidations::store();
             $validator = Validator::make($request->all(), $validationData['rules'], $validationData['messages']);
             
@@ -100,27 +99,45 @@ class ReportController extends Controller
             $validatedData = $validator->validated();
             $userId = $validatedData['idUsuario'];
 
-            // Procesar la imagen
-            $photoData = $validatedData['photo'];
-            $photoData = str_replace('data:image/jpeg;base64,', '', $photoData);
-            $photoData = str_replace(' ', '+', $photoData);
-            $image = base64_decode($photoData);
+            // 1️⃣ Ver qué viene realmente
+            Log::info('ReportController::store - request recibida', [
+                'idUsuario' => $userId,
+                'hasPhoto' => isset($validatedData['photo'])
+            ]);
 
-            if ($image === false) {
+            // 2️⃣ Procesar la imagen base64
+            $photoData = preg_replace('/^data:image\/\w+;base64,/', '', $validatedData['photo'] ?? '');
+            $photoData = str_replace(' ', '+', $photoData);
+            $imageBinary = base64_decode($photoData);
+
+            if ($imageBinary === false || strlen($imageBinary) < 10) {
+                Log::warning('ReportController::store - imagen vacía o inválida');
                 return response()->json(['message' => 'Error al decodificar la imagen'], 400);
             }
 
-            // Nombre y ruta
+            Log::info('ReportController::store - tamaño imagen', ['bytes' => strlen($imageBinary)]);
+
+            // 3️⃣ Generar nombre y ruta
             $imageName = 'report_' . Str::random(10) . '.jpg';
             $imagePath = "usuarios/{$userId}/reportes/{$imageName}";
 
-            // Guardar en storage/app/public/usuarios/...
-            Storage::disk('public')->put($imagePath, $image);
+            // 4️⃣ Guardar en MinIO con visibilidad explícita
+            Storage::disk('minio')->put(
+                $imagePath,
+                $imageBinary,
+                [
+                    'visibility' => 'public',
+                    'ContentType' => 'image/jpeg'
+                ]
+            );
 
-            // Generar URL pública (/storage/usuarios/...)
-            $imageUrl = Storage::url($imagePath);
+            Log::info('ReportController::store - imagen subida', ['path' => $imagePath]);
 
-            // Crear el reporte
+            // 5️⃣ Generar URL pública
+            $baseUrl = rtrim(env('MINIO_URL'), '/');
+            $imageUrl = "{$baseUrl}/{$imagePath}";
+
+            // 6️⃣ Crear el reporte
             $report = Report::create([
                 'idUsuario'   => $userId,
                 'description' => $validatedData['description'],
