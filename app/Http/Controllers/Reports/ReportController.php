@@ -114,17 +114,27 @@ class ReportController extends Controller
             $imageName = 'report_' . Str::random(10) . '.jpg';
             $imagePath = "usuarios/{$userId}/reportes/{$imageName}";
 
-            // Guardar en storage/app/public/usuarios/...
-            Storage::disk('public')->put($imagePath, $image);
+            // -----------------------------------------------------------------
+            // INICIO DE CAMBIOS
+            // -----------------------------------------------------------------
 
-            // Generar URL pública (/storage/usuarios/...)
-            $imageUrl = Storage::url($imagePath);
+            // Guardar en MinIO
+            // Usamos 'minio' y agregamos 'public' para que el archivo sea accesible
+            Storage::disk('minio')->put($imagePath, $image, 'public'); // <-- CAMBIO 1
+
+            // Generar URL pública desde MinIO
+            // Esto usará la 'AWS_URL' que definimos en .env y config/filesystems.php
+            $imageUrl = Storage::disk('minio')->url($imagePath); // <-- CAMBIO 2
+
+            // -----------------------------------------------------------------
+            // FIN DE CAMBIOS
+            // -----------------------------------------------------------------
 
             // Crear el reporte
             $report = Report::create([
                 'idUsuario'   => $userId,
                 'description' => $validatedData['description'],
-                'image_url'   => $imageUrl,
+                'image_url'   => $imageUrl, // <-- Esta URL ahora es de MinIO
                 'latitude'    => $validatedData['latitude'],
                 'longitude'   => $validatedData['longitude'],
                 'status'      => 0,
@@ -143,10 +153,11 @@ class ReportController extends Controller
                 'errors'  => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error in ReportController::store', ['error' => $e->getMessage()]);
+            Log::error('Error in ReportController::store', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]); // <-- Añadí más detalle al log
             return response()->json(['message' => 'Error al crear el reporte.'], 500);
         }
     }
+
     public function updateStatus(Request $request, $id)
     {
         try {
