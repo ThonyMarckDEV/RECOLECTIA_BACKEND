@@ -7,6 +7,7 @@
 /storage/pail
 /vendor
 .env
+.env.xd
 .env.docker
 .env.backup
 .env.production
