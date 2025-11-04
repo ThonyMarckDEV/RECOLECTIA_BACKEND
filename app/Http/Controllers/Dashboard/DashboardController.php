@@ -9,39 +9,86 @@ use App\Models\User;
 use App\Models\Rol;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Carbon\CarbonPeriod;
 
 class DashboardController extends Controller
 {
 
-     /**
-     * Obtener un resumen del total de basura registrada (per capita).
+/**
+     * Obtener un resumen del total de basura registrada (per capita) por rango de fechas.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getPerCapitaSummary()
+    public function getPerCapitaSummary(Request $request)
     {
         try {
-            // Suma del peso para el día de hoy
-            $dailyTotal = PerCapitaRecord::whereDate('record_date', Carbon::today())->sum('weight_kg');
+            // 1. Validar las fechas de entrada
+            $validated = $request->validate([
+                'startDate' => 'nullable|date_format:Y-m-d',
+                'endDate'   => 'nullable|date_format:Y-m-d|after_or_equal:startDate',
+            ]);
 
-            // Suma del peso para la semana actual (de Lunes a Domingo)
+            // 2. Definir el rango de fechas (default: mes actual si no se envían)
+            $startDate = Carbon::parse($validated['startDate'] ?? Carbon::now()->startOfMonth());
+            $endDate   = Carbon::parse($validated['endDate'] ?? Carbon::now()->endOfMonth());
+
+            // 3. Consulta principal agrupada por día dentro del rango
+            $records = PerCapitaRecord::whereBetween('record_date', [$startDate, $endDate])
+                ->select(
+                    DB::raw('DATE(record_date) as date'), // Formato Y-m-d
+                    DB::raw('SUM(weight_kg) as total_weight')
+                )
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get()
+                // Usamos keyBy para buscar fácilmente por fecha
+                ->keyBy('date'); 
+
+            // 4. Calcular totales para las tarjetas
+            $totalInRange = $records->sum('total_weight');
+            $dailyTotal = PerCapitaRecord::whereDate('record_date', Carbon::today())->sum('weight_kg');
             $weeklyTotal = PerCapitaRecord::whereBetween('record_date', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->sum('weight_kg');
-            
-            // Suma del peso para el mes actual
-            $monthlyTotal = PerCapitaRecord::whereYear('record_date', Carbon::now()->year)
-                                          ->whereMonth('record_date', Carbon::now()->month)
-                                          ->sum('weight_kg');
+
+            // 5. Formatear para el gráfico (rellenar días con 0)
+            $dateRange = CarbonPeriod::create($startDate, $endDate);
+            $chartLabels = [];
+            $chartValues = [];
+
+            foreach ($dateRange as $date) {
+                $dateString = $date->format('Y-m-d');
+                $chartLabels[] = $dateString;
+                // Si existe un registro para esa fecha, usa su total, si no, 0
+                $chartValues[] = $records->has($dateString) ? (float)$records[$dateString]->total_weight : 0;
+            }
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    // Convertimos a float para evitar que devuelva 'null' si no hay registros
-                    'dailyTotal' => (float) $dailyTotal,
-                    'weeklyTotal' => (float) $weeklyTotal,
-                    'monthlyTotal' => (float) $monthlyTotal,
+                    // Totales para las tarjetas
+                    'dailyTotal'   => (float) $dailyTotal,   // Sigue siendo el de "hoy"
+                    'weeklyTotal'  => (float) $weeklyTotal,  // Sigue siendo el de "esta semana"
+                    'monthlyTotal' => (float) $totalInRange, // "Monthly" ahora es el total del RANGO
+                    
+                    // Datos para el gráfico dinámico
+                    'chart' => [
+                        'labels' => $chartLabels, // ['2025-10-01', '2025-10-02', ...]
+                        'values' => $chartValues, // [0, 10.00, 8.00, ...]
+                    ],
+                    
+                    // Devolvemos las fechas usadas para confirmación
+                    'startDate' => $startDate->format('Y-m-d'),
+                    'endDate'   => $endDate->format('Y-m-d'),
                 ]
             ], 200);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Datos de solicitud inválidos.',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
